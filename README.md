@@ -1,2 +1,1 @@
-#2D Gaussian Splatting Rasterizer for spherical frames.
-
+# 2D Gaussian Splatting Rasterizer for spherical frames.
