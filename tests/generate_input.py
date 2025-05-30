@@ -20,9 +20,9 @@ def generate_scene():
     quats = torch.zeros(1, 4).repeat(len(means3D), 1).float().cuda()
     quats[..., 0] = 1.0
     scales = (length) / (n_points - 1)
-    scales = torch.zeros(1, 3).repeat(
+    scales = torch.zeros(1, 2).repeat(
         len(means3D), 1).fill_(scales).float().cuda()
-    opacity = torch.ones_like(scales).float().cuda()
+    opacity = torch.ones((means3D.shape[0], 1)).float().cuda()
     # Camera parameters
     fov_top = np.pi / 4
     fov_bottom = -np.pi / 4
