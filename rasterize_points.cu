@@ -36,8 +36,8 @@ RasterizeGaussiansCUDA(
     const torch::Tensor &scales, const torch::Tensor &rotations,
     const float scale_modifier, const torch::Tensor &transMat_precomp,
     const torch::Tensor &viewmatrix, const torch::Tensor &projmatrix,
-    const float tan_fovx, const float tan_fovy, const int image_height,
-    const int image_width, const bool prefiltered, const bool debug) {
+    const int image_height, const int image_width, const bool prefiltered,
+    const bool debug) {
   if (means3D.ndimension() != 2 || means3D.size(1) != 3) {
     AT_ERROR("means3D must have dimensions (num_points, 3)");
   }
@@ -79,8 +79,8 @@ RasterizeGaussiansCUDA(
         rotations.contiguous().data_ptr<float>(),
         transMat_precomp.contiguous().data_ptr<float>(),
         viewmatrix.contiguous().data_ptr<float>(),
-        projmatrix.contiguous().data_ptr<float>(), tan_fovx, tan_fovy,
-        prefiltered, out_others.contiguous().data_ptr<float>(),
+        projmatrix.contiguous().data_ptr<float>(), prefiltered,
+        out_others.contiguous().data_ptr<float>(),
         radii.contiguous().data_ptr<int>(), debug);
   }
   return std::make_tuple(rendered, out_others, radii, geomBuffer, binningBuffer,
@@ -94,7 +94,6 @@ RasterizeGaussiansBackwardCUDA(
     const torch::Tensor &scales, const torch::Tensor &rotations,
     const float scale_modifier, const torch::Tensor &transMat_precomp,
     const torch::Tensor &viewmatrix, const torch::Tensor &projmatrix,
-    const float tan_fovx, const float tan_fovy,
     const torch::Tensor &dL_dout_others, const torch::Tensor &geomBuffer,
     const int R, const torch::Tensor &binningBuffer,
     const torch::Tensor &imageBuffer, const bool debug) {
@@ -128,7 +127,7 @@ RasterizeGaussiansBackwardCUDA(
         scales.data_ptr<float>(), scale_modifier, rotations.data_ptr<float>(),
         transMat_precomp.contiguous().data_ptr<float>(),
         viewmatrix.contiguous().data_ptr<float>(),
-        projmatrix.contiguous().data_ptr<float>(), tan_fovx, tan_fovy,
+        projmatrix.contiguous().data_ptr<float>(),
         radii.contiguous().data_ptr<int>(),
         reinterpret_cast<char *>(geomBuffer.contiguous().data_ptr()),
         reinterpret_cast<char *>(binningBuffer.contiguous().data_ptr()),

@@ -31,9 +31,8 @@ void preprocess(int P, const float3 *means, const int *radii,
                 const bool *clamped, const glm::vec2 *scales,
                 const glm::vec4 *rotations, const float scale_modifier,
                 const float *transMats, const float *view, const float *proj,
-                const float focal_x, const float focal_y, const float tan_fovx,
-                const float tan_fovy, const int W, const int H,
-                float3 *dL_dmean2D, const float *dL_dnormal3D,
+                const float focal_x, const float focal_y, const int W,
+                const int H, float3 *dL_dmean2D, const float *dL_dnormal3D,
                 float *dL_dtransMat, glm::vec3 *dL_dmeans, glm::vec2 *dL_dscale,
                 glm::vec4 *dL_drot);
 } // namespace BACKWARD

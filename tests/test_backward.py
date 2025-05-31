@@ -25,8 +25,6 @@ def test_backward():
     raster_settings = GaussianRasterizationSettings(
         image_height=int(img_size[1]),
         image_width=int(img_size[0]),
-        tanfovx=fov[0],
-        tanfovy=fov[1],
         scale_modifier=1.0,
         viewmatrix=viewmat,
         projmatrix=projmat,

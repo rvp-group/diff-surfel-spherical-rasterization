@@ -377,7 +377,7 @@ __global__ void preprocessCUDA(
     const bool *clamped, const glm::vec2 *scales, const glm::vec4 *rotations,
     const float scale_modifier, const float *viewmatrix,
     const float *projmatrix, const float focal_x, const float focal_y,
-    const float tan_fovx, const float tan_fovy, const int W, const int H,
+    const int W, const int H,
     // grad input
     float *dL_dtransMats, const float *dL_dnormal3Ds, float3 *dL_dmean2Ds,
     glm::vec3 *dL_dmean3Ds, glm::vec2 *dL_dscales, glm::vec4 *dL_drots) {
@@ -392,19 +392,21 @@ __global__ void preprocessCUDA(
                         viewmatrix, W, H, (float3 *)dL_dnormal3Ds, dL_dmean2Ds,
                         dL_dtransMats, dL_dmean3Ds, dL_dscales, dL_drots);
 }
-void BACKWARD::preprocess(
-    int P, const float3 *means3D, const int *radii, const bool *clamped,
-    const glm::vec2 *scales, const glm::vec4 *rotations,
-    const float scale_modifier, const float *transMats, const float *viewmatrix,
-    const float *projmatrix, const float focal_x, const float focal_y,
-    const float tan_fovx, const float tan_fovy, const int W, const int H,
-    float3 *dL_dmean2Ds, const float *dL_dnormal3Ds, float *dL_dtransMats,
-    glm::vec3 *dL_dmean3Ds, glm::vec2 *dL_dscales, glm::vec4 *dL_drots) {
+void BACKWARD::preprocess(int P, const float3 *means3D, const int *radii,
+                          const bool *clamped, const glm::vec2 *scales,
+                          const glm::vec4 *rotations,
+                          const float scale_modifier, const float *transMats,
+                          const float *viewmatrix, const float *projmatrix,
+                          const float focal_x, const float focal_y, const int W,
+                          const int H, float3 *dL_dmean2Ds,
+                          const float *dL_dnormal3Ds, float *dL_dtransMats,
+                          glm::vec3 *dL_dmean3Ds, glm::vec2 *dL_dscales,
+                          glm::vec4 *dL_drots) {
   preprocessCUDA<NUM_CHANNELS><<<(P + 255) / 256, 256>>>(
       P, (float3 *)means3D, transMats, radii, clamped, (glm::vec2 *)scales,
       (glm::vec4 *)rotations, scale_modifier, viewmatrix, projmatrix, focal_x,
-      focal_y, tan_fovx, tan_fovy, W, H, dL_dtransMats, dL_dnormal3Ds,
-      dL_dmean2Ds, dL_dmean3Ds, dL_dscales, dL_drots);
+      focal_y, W, H, dL_dtransMats, dL_dnormal3Ds, dL_dmean2Ds, dL_dmean3Ds,
+      dL_dscales, dL_drots);
 }
 
 void BACKWARD::render(const dim3 grid, const dim3 block, const uint2 *ranges,

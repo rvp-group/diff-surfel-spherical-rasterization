@@ -174,8 +174,8 @@ int CudaRasterizer::Rasterizer::forward(
     const int height, const float *means3D, const float *opacities,
     const float *scales, const float scale_modifier, const float *rotations,
     const float *transMat_precomp, const float *viewmatrix,
-    const float *projmatrix, const float tan_fovx, float tan_fovy,
-    const bool prefiltered, float *out_others, int *radii, bool debug) {
+    const float *projmatrix, const bool prefiltered, float *out_others,
+    int *radii, bool debug) {
 
   size_t chunk_size = required<GeometryState>(P);
   char *chunkptr = geometryBuffer(chunk_size);
@@ -196,14 +196,14 @@ int CudaRasterizer::Rasterizer::forward(
 
   // Run preprocessing per-Gaussian (transformation, bounding, conversion of SHs
   // to RGB)
-  CHECK_CUDA(FORWARD::preprocess(
-                 P, means3D, (glm::vec2 *)scales, scale_modifier,
-                 (glm::vec4 *)rotations, opacities, geomState.clamped,
-                 transMat_precomp, viewmatrix, projmatrix, width, height,
-                 tan_fovx, tan_fovy, radii, geomState.means2D, geomState.depths,
-                 geomState.transMat, geomState.normal_opacity, tile_grid,
-                 geomState.tiles_touched, prefiltered),
-             debug);
+  CHECK_CUDA(
+      FORWARD::preprocess(P, means3D, (glm::vec2 *)scales, scale_modifier,
+                          (glm::vec4 *)rotations, opacities, geomState.clamped,
+                          transMat_precomp, viewmatrix, projmatrix, width,
+                          height, radii, geomState.means2D, geomState.depths,
+                          geomState.transMat, geomState.normal_opacity,
+                          tile_grid, geomState.tiles_touched, prefiltered),
+      debug);
   // Compute prefix sum over full list of touched tile counts by Gaussians
   // E.g., [2, 3, 0, 2, 1] -> [2, 5, 5, 7, 8]
   CHECK_CUDA(cub::DeviceScan::InclusiveSum(
@@ -267,11 +267,10 @@ void CudaRasterizer::Rasterizer::backward(
     const int P, int R, const int width, int height, const float *means3D,
     const float *scales, const float scale_modifier, const float *rotations,
     const float *transMat_precomp, const float *viewmatrix,
-    const float *projmatrix, const float tan_fovx, float tan_fovy,
-    const int *radii, char *geom_buffer, char *binning_buffer, char *img_buffer,
-    const float *dL_depths, float *dL_dmean2D, float *dL_dnormal,
-    float *dL_dopacity, float *dL_dmean3D, float *dL_dtransMat,
-    float *dL_dscale, float *dL_drot, bool debug) {
+    const float *projmatrix, const int *radii, char *geom_buffer,
+    char *binning_buffer, char *img_buffer, const float *dL_depths,
+    float *dL_dmean2D, float *dL_dnormal, float *dL_dopacity, float *dL_dmean3D,
+    float *dL_dtransMat, float *dL_dscale, float *dL_drot, bool debug) {
   GeometryState geomState = GeometryState::fromChunk(geom_buffer, P);
   BinningState binningState = BinningState::fromChunk(binning_buffer, R);
   ImageState imgState = ImageState::fromChunk(img_buffer, width * height);
@@ -315,7 +314,7 @@ void CudaRasterizer::Rasterizer::backward(
                                   geomState.clamped, (glm::vec2 *)scales,
                                   (glm::vec4 *)rotations, scale_modifier,
                                   transMat_ptr, viewmatrix, projmatrix, focal_x,
-                                  focal_y, tan_fovx, tan_fovy, width, height,
+                                  focal_y, width, height,
                                   (float3 *)dL_dmean2D, // gradient inputs
                                   dL_dnormal,           // gradient inputs
                                   dL_dtransMat, (glm::vec3 *)dL_dmean3D,

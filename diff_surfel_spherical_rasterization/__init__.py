@@ -18,8 +18,6 @@ from . import _C
 class GaussianRasterizationSettings(NamedTuple):
     image_height: int
     image_width: int
-    tanfovx: float
-    tanfovy: float
     scale_modifier: float
     viewmatrix: torch.Tensor
     projmatrix: torch.Tensor
@@ -78,8 +76,6 @@ class _RasterizeGaussians(torch.autograd.Function):
             cov3Ds_precomp,
             raster_settings.viewmatrix,
             raster_settings.projmatrix,
-            raster_settings.tanfovx,
-            raster_settings.tanfovy,
             raster_settings.image_height,
             raster_settings.image_width,
             raster_settings.prefiltered,
@@ -153,8 +149,6 @@ class _RasterizeGaussians(torch.autograd.Function):
             cov3Ds_precomp,
             raster_settings.viewmatrix,
             raster_settings.projmatrix,
-            raster_settings.tanfovx,
-            raster_settings.tanfovy,
             grad_depth,
             geomBuffer,
             num_rendered,

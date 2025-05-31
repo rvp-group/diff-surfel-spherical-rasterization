@@ -103,10 +103,9 @@ preprocessCUDA(int P, const float *orig_points, const glm::vec2 *scales,
                const float scale_modifier, const glm::vec4 *rotations,
                const float *opacities, bool *, const float *transMat_precomp,
                const float *viewmatrix, const float *projmatrix, const int W,
-               int H, const float, const float, int *radii,
-               float2 *points_xy_image, float *depths, float *transMats,
-               float4 *normal_opacity, const dim3 grid, uint32_t *tiles_touched,
-               bool prefiltered) {
+               int H, int *radii, float2 *points_xy_image, float *depths,
+               float *transMats, float4 *normal_opacity, const dim3 grid,
+               uint32_t *tiles_touched, bool prefiltered) {
 
   auto idx = cg::this_grid().thread_rank();
   if (idx >= static_cast<unsigned long long>(P))
@@ -367,13 +366,12 @@ void FORWARD::preprocess(int P, const float *means3D, const glm::vec2 *scales,
                          const float *opacities, bool *clamped,
                          const float *transMat_precomp, const float *viewmatrix,
                          const float *projmatrix, const int W, const int H,
-                         const float tan_fovx, const float tan_fovy, int *radii,
-                         float2 *means2D, float *depths, float *transMats,
-                         float4 *normal_opacity, const dim3 grid,
-                         uint32_t *tiles_touched, bool prefiltered) {
+                         int *radii, float2 *means2D, float *depths,
+                         float *transMats, float4 *normal_opacity,
+                         const dim3 grid, uint32_t *tiles_touched,
+                         bool prefiltered) {
   preprocessCUDA<NUM_CHANNELS><<<(P + 255) / 256, 256>>>(
       P, means3D, scales, scale_modifier, rotations, opacities, clamped,
-      transMat_precomp, viewmatrix, projmatrix, W, H, tan_fovx, tan_fovy, radii,
-      means2D, depths, transMats, normal_opacity, grid, tiles_touched,
-      prefiltered);
+      transMat_precomp, viewmatrix, projmatrix, W, H, radii, means2D, depths,
+      transMats, normal_opacity, grid, tiles_touched, prefiltered);
 }

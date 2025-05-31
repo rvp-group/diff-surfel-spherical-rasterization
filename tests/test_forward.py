@@ -23,13 +23,10 @@ def test_raster():
     raster_settings = GaussianRasterizationSettings(
         image_height=int(img_size[1]),
         image_width=int(img_size[0]),
-        tanfovx=fov[0],
-        tanfovy=fov[1],
         scale_modifier=1.0,
         viewmatrix=viewmat,
         projmatrix=projmat,
         prefiltered=False,
-        debug=True,
     )
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
 
