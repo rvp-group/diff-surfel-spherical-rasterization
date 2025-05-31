@@ -31,7 +31,7 @@ def test_backward():
         viewmatrix=viewmat,
         projmatrix=projmat,
         prefiltered=False,
-        debug=True,
+        debug=False,
     )
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
 
@@ -47,7 +47,7 @@ def test_backward():
         "opacity": torch.nn.Parameter(opacity, requires_grad=True)
     }
     W, H = img_size[0], img_size[1]
-    opt = torch.optim.Adam(opt_params.values(), lr=0.001)
+    opt = torch.optim.Adam(opt_params.values(), lr=0.0001)
     gt_depth = torch.zeros((1, H, W)).float().cuda()
     gt_depth[:, :, W // 2 - 200: W // 2 + 200] = 1.0
     gt_alpha = gt_depth.clone()
@@ -66,6 +66,8 @@ def test_backward():
         rend_depth = allmap[0:1]
         rend_alpha = allmap[1:2]
         valid_mask = rend_alpha > 0.0
+        torch.cuda.synchronize()
+        loop_end_raster = time.time()
 
         depth_exp = rend_depth
         depth_exp[valid_mask] = depth_exp[valid_mask] / rend_alpha[valid_mask]
@@ -76,11 +78,13 @@ def test_backward():
         loss = loss_depth + 0.2 * loss_alpha
         loss.backward()
         opt.step()
+        torch.cuda.synchronize()
         loop_end = time.time()
 
-        print(f"loss={loss.item():.4f}, dt={loop_end - loop_start:.3f} s")
-
-    ...
+        print(f"loss={loss.item():.4f} | "
+              f"dt={1e3 * (loop_end - loop_start):.3f} ms | "
+              f"t_Rast={1000*(loop_end_raster - loop_start):.3f} ms | "
+              f"t_Opt={1e3*(loop_end - loop_end_raster):.3f} ms")
 
 
 if __name__ == "__main__":
