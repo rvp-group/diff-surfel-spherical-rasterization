@@ -19,10 +19,9 @@
 
 namespace BACKWARD {
 void render(const dim3 grid, dim3 block, const uint2 *ranges,
-            const uint32_t *point_list, int W, int H, float focal_x,
-            float focal_y, float c_x, float c_y, const float2 *means2D,
-            const float4 *normal_opacity, const float *transMats,
-            const float *depths, const float *final_Ts,
+            const uint32_t *point_list, int W, int H, const float *projmatrix,
+            const float2 *means2D, const float4 *normal_opacity,
+            const float *transMats, const float *depths, const float *final_Ts,
             const uint32_t *n_contrib, const float *dL_depths,
             float *dL_dtransMat, float3 *dL_dmean2D, float *dL_dnormal3D,
             float *dL_dopacity);
@@ -31,8 +30,7 @@ void preprocess(int P, const float3 *means, const int *radii,
                 const bool *clamped, const glm::vec2 *scales,
                 const glm::vec4 *rotations, const float scale_modifier,
                 const float *transMats, const float *view, const float *proj,
-                const float focal_x, const float focal_y, const int W,
-                const int H, float3 *dL_dmean2D, const float *dL_dnormal3D,
-                float *dL_dtransMat, glm::vec3 *dL_dmeans, glm::vec2 *dL_dscale,
-                glm::vec4 *dL_drot);
+                const int W, const int H, float3 *dL_dmean2D,
+                const float *dL_dnormal3D, float *dL_dtransMat,
+                glm::vec3 *dL_dmeans, glm::vec2 *dL_dscale, glm::vec4 *dL_drot);
 } // namespace BACKWARD

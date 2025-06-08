@@ -20,7 +20,7 @@ template <uint32_t C>
 __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
     renderCUDA(const uint2 *__restrict__ ranges,
                const uint32_t *__restrict__ point_list, int W, int H,
-               float focal_x, float focal_y, float c_x, float c_y,
+               const float *__restrict__ projmatrix,
                const float2 *__restrict__ points_xy_image,
                const float4 *__restrict__ normal_opacity,
                const float *__restrict__ transMats, const float *__restrict__,
@@ -98,8 +98,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
   float last_dL_dT = 0;
 
   // Precomputation for efficiency reasons
-  const float i_fx = 1.f / focal_x;
-  const float i_fy = 1.f / focal_y;
+  const float i_fx = 1.f / projmatrix[0];
+  const float i_fy = 1.f / projmatrix[5];
 
   // Traverse all Gaussians
   for (int i = 0; i < rounds; ++i, toDo -= BLOCK_SIZE) {
@@ -138,7 +138,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
       const float4 Tv = collected_Tv[j];
       const float4 Tw = collected_Tw[j];
 
-      float2 sph = {i_fx * (pixf.x - c_x), i_fy * (pixf.y - c_y)};
+      float2 sph = {i_fx * (pixf.x - projmatrix[8]),
+                    i_fy * (pixf.y - projmatrix[9])};
       float3 xyz = sph_to_xyz(sph);
       const float pi_az_inorm = rsqrtf(xyz.y * xyz.y + xyz.x * xyz.x);
       float3 pi_az = {xyz.y * pi_az_inorm, -xyz.x * pi_az_inorm, 0.0f};
@@ -281,6 +282,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
         const float _ss = Tw.x * Tw.x + Tw.y * Tw.y;
         const float _sn = sqrtf(_ss);
 
+        const float focal_x = projmatrix[0];
+        const float focal_y = projmatrix[5];
         float3 dL_dTw = {
             focal_x * dL_dd.x * (-Tw.y / _ss) +
                 focal_y * dL_dd.y * (-Tw.x * Tw.z / (_sn * depth2d)),
@@ -376,8 +379,7 @@ __global__ void preprocessCUDA(
     int P, const float3 *means3D, const float *transMats, const int *radii,
     const bool *clamped, const glm::vec2 *scales, const glm::vec4 *rotations,
     const float scale_modifier, const float *viewmatrix,
-    const float *projmatrix, const float focal_x, const float focal_y,
-    const int W, const int H,
+    const float *projmatrix, const int W, const int H,
     // grad input
     float *dL_dtransMats, const float *dL_dnormal3Ds, float3 *dL_dmean2Ds,
     glm::vec3 *dL_dmean3Ds, glm::vec2 *dL_dscales, glm::vec4 *dL_drots) {
@@ -397,29 +399,27 @@ void BACKWARD::preprocess(int P, const float3 *means3D, const int *radii,
                           const glm::vec4 *rotations,
                           const float scale_modifier, const float *transMats,
                           const float *viewmatrix, const float *projmatrix,
-                          const float focal_x, const float focal_y, const int W,
-                          const int H, float3 *dL_dmean2Ds,
+                          const int W, const int H, float3 *dL_dmean2Ds,
                           const float *dL_dnormal3Ds, float *dL_dtransMats,
                           glm::vec3 *dL_dmean3Ds, glm::vec2 *dL_dscales,
                           glm::vec4 *dL_drots) {
   preprocessCUDA<NUM_CHANNELS><<<(P + 255) / 256, 256>>>(
       P, (float3 *)means3D, transMats, radii, clamped, (glm::vec2 *)scales,
-      (glm::vec4 *)rotations, scale_modifier, viewmatrix, projmatrix, focal_x,
-      focal_y, W, H, dL_dtransMats, dL_dnormal3Ds, dL_dmean2Ds, dL_dmean3Ds,
-      dL_dscales, dL_drots);
+      (glm::vec4 *)rotations, scale_modifier, viewmatrix, projmatrix, W, H,
+      dL_dtransMats, dL_dnormal3Ds, dL_dmean2Ds, dL_dmean3Ds, dL_dscales,
+      dL_drots);
 }
 
 void BACKWARD::render(const dim3 grid, const dim3 block, const uint2 *ranges,
-                      const uint32_t *point_list, int W, int H, float focal_x,
-                      float focal_y, float c_x, float c_y,
-                      const float2 *means2D, const float4 *normal_opacity,
-                      const float *transMats, const float *depths,
-                      const float *final_Ts, const uint32_t *n_contrib,
-                      const float *dL_depths, float *dL_dtransMat,
-                      float3 *dL_dmean2D, float *dL_dnormal3D,
-                      float *dL_dopacity) {
+                      const uint32_t *point_list, int W, int H,
+                      const float *projmatrix, const float2 *means2D,
+                      const float4 *normal_opacity, const float *transMats,
+                      const float *depths, const float *final_Ts,
+                      const uint32_t *n_contrib, const float *dL_depths,
+                      float *dL_dtransMat, float3 *dL_dmean2D,
+                      float *dL_dnormal3D, float *dL_dopacity) {
   renderCUDA<NUM_CHANNELS><<<grid, block>>>(
-      ranges, point_list, W, H, focal_x, focal_y, c_x, c_y, means2D,
-      normal_opacity, transMats, depths, final_Ts, n_contrib, dL_depths,
-      dL_dtransMat, dL_dmean2D, dL_dnormal3D, dL_dopacity);
+      ranges, point_list, W, H, projmatrix, means2D, normal_opacity, transMats,
+      depths, final_Ts, n_contrib, dL_depths, dL_dtransMat, dL_dmean2D,
+      dL_dnormal3D, dL_dopacity);
 }

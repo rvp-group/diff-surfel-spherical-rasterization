@@ -3,7 +3,7 @@ import numpy as np
 
 
 def generate_scene():
-    n_points = 6
+    n_points = 32
     length = 10.0
     print(f"Generating flat scene with:"
           f"{n_points}x{n_points} gaussians "

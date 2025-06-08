@@ -279,15 +279,6 @@ void CudaRasterizer::Rasterizer::backward(
     radii = geomState.internal_radii;
   }
 
-  float projmatrix_host[12];
-  CHECK_CUDA(cudaMemcpy(projmatrix_host, projmatrix, 12 * sizeof(float),
-                        cudaMemcpyDeviceToHost),
-             debug);
-  const float focal_x = projmatrix_host[0];
-  const float focal_y = projmatrix_host[5];
-  const float c_x = projmatrix_host[8];
-  const float c_y = projmatrix_host[9];
-
   const dim3 tile_grid((width + BLOCK_X - 1) / BLOCK_X,
                        (height + BLOCK_Y - 1) / BLOCK_Y, 1);
   const dim3 block(BLOCK_X, BLOCK_Y, 1);
@@ -301,7 +292,7 @@ void CudaRasterizer::Rasterizer::backward(
       (transMat_precomp != nullptr) ? transMat_precomp : geomState.transMat;
   CHECK_CUDA(BACKWARD::render(
                  tile_grid, block, imgState.ranges, binningState.point_list,
-                 width, height, focal_x, focal_y, c_x, c_y, geomState.means2D,
+                 width, height, projmatrix, geomState.means2D,
                  geomState.normal_opacity, transMat_ptr, depth_ptr,
                  imgState.accum_alpha, imgState.n_contrib, dL_depths,
                  dL_dtransMat, (float3 *)dL_dmean2D, dL_dnormal, dL_dopacity),
@@ -310,14 +301,13 @@ void CudaRasterizer::Rasterizer::backward(
   // Take care of the rest of preprocessing. Was the precomputed covariance
   // given to us or a scales/rot pair? If precomputed, pass that. If not,
   // use the one we computed ourselves.
-  CHECK_CUDA(BACKWARD::preprocess(P, (float3 *)means3D, radii,
-                                  geomState.clamped, (glm::vec2 *)scales,
-                                  (glm::vec4 *)rotations, scale_modifier,
-                                  transMat_ptr, viewmatrix, projmatrix, focal_x,
-                                  focal_y, width, height,
-                                  (float3 *)dL_dmean2D, // gradient inputs
-                                  dL_dnormal,           // gradient inputs
-                                  dL_dtransMat, (glm::vec3 *)dL_dmean3D,
-                                  (glm::vec2 *)dL_dscale, (glm::vec4 *)dL_drot),
+  CHECK_CUDA(BACKWARD::preprocess(
+                 P, (float3 *)means3D, radii, geomState.clamped,
+                 (glm::vec2 *)scales, (glm::vec4 *)rotations, scale_modifier,
+                 transMat_ptr, viewmatrix, projmatrix, width, height,
+                 (float3 *)dL_dmean2D, // gradient inputs
+                 dL_dnormal,           // gradient inputs
+                 dL_dtransMat, (glm::vec3 *)dL_dmean3D, (glm::vec2 *)dL_dscale,
+                 (glm::vec4 *)dL_drot),
              debug)
 }

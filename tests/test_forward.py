@@ -27,6 +27,7 @@ def test_raster():
         viewmatrix=viewmat,
         projmatrix=projmat,
         prefiltered=False,
+        debug=False
     )
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
 

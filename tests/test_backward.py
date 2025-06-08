@@ -45,7 +45,7 @@ def test_backward():
         "opacity": torch.nn.Parameter(opacity, requires_grad=True)
     }
     W, H = img_size[0], img_size[1]
-    opt = torch.optim.Adam(opt_params.values(), lr=0.0001)
+    opt = torch.optim.Adam(opt_params.values(), lr=0.001)
     gt_depth = torch.zeros((1, H, W)).float().cuda()
     gt_depth[:, :, W // 2 - 200: W // 2 + 200] = 1.0
     gt_alpha = gt_depth.clone()
